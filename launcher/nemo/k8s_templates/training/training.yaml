@@ -137,9 +137,9 @@ spec:
             - /bin/bash
             - -c
             {{- if eq $config.device "trainium" }}
-            - "/opt/bin/scripts/train-script-trn.sh 2>&1 | tee /data/training.log"
+            - "if [ -n \"$PRE_SCRIPT_COMMANDS\" ]; then ( set -e; eval \"$PRE_SCRIPT_COMMANDS\" ); rc=$?; if [ $rc -ne 0 ]; then exit $rc; fi; unset PRE_SCRIPT_COMMANDS; fi; /opt/bin/scripts/train-script-trn.sh 2>&1 | tee /data/training.log"
             {{- else }}
-            - "/opt/bin/scripts/train-script-gpu.sh 2>&1 | tee /data/training.log"
+            - "if [ -n \"$PRE_SCRIPT_COMMANDS\" ]; then ( set -e; eval \"$PRE_SCRIPT_COMMANDS\" ); rc=$?; if [ $rc -ne 0 ]; then exit $rc; fi; unset PRE_SCRIPT_COMMANDS; fi; /opt/bin/scripts/train-script-gpu.sh 2>&1 | tee /data/training.log"
             {{- end }}
             imagePullPolicy: {{ .Values.image.pullPolicy }}
             securityContext:

@@ -26,7 +26,7 @@ import omegaconf
 from hydra.core.hydra_config import HydraConfig
 from nemo_launcher.core.stages import Training, _hydra_interpolation
 from nemo_launcher.utils.job_utils import JobPaths
-from omegaconf import OmegaConf, open_dict
+from omegaconf import ListConfig, OmegaConf, open_dict
 
 from ..accelerator_devices import get_num_accelerator_devices
 from ..efa import (
@@ -226,6 +226,25 @@ class SMTraining(Training):
         command = [torchrun_cmd, entry_point, script_args_str]
         command_string = " \\\n  ".join(command)
         return command_string
+
+    @staticmethod
+    def _normalize_script_list(value):
+        if value is None:
+            return []
+        if isinstance(value, str):
+            value = value.strip()
+            return [value] if value else []
+        if isinstance(value, (list, tuple, ListConfig)):
+            normalized = []
+            for item in value:
+                if item is None:
+                    continue
+                item_str = str(item).strip()
+                if item_str:
+                    normalized.append(item_str)
+            return normalized
+        item_str = str(value).strip()
+        return [item_str] if item_str else []
 
     def _get_hostfile_location(self):
         """
@@ -923,8 +942,12 @@ class SMTraining(Training):
             values_template.trainingConfig.useHyperPodPytorchJob = True
             values_template.trainingConfig.instanceType = self.instance_type
 
-        values_template.trainingConfig.pre_script = self.stage_cfg.get("pre_script", [])
-        values_template.trainingConfig.post_script = self.stage_cfg.get("post_script", [])
+        values_template.trainingConfig.pre_script = self._normalize_script_list(
+            self.stage_cfg.get("pre_script", [])
+        )
+        values_template.trainingConfig.post_script = self._normalize_script_list(
+            self.stage_cfg.get("post_script", [])
+        )
         return values_template
 
     def _update_ray_specific_values(self, values_template):
