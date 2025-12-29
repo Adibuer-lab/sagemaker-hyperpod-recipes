@@ -70,6 +70,15 @@ def replace_placeholder(file_path, placeholder, replacement):
         file.write(content)
 
 
+def normalize_artifact_content(content, workspace_dir, results_dir):
+    """Normalize machine-specific paths in artifacts for baseline storage."""
+    if workspace_dir:
+        content = content.replace(workspace_dir, "{$workspace_dir}")
+    if results_dir:
+        content = content.replace(results_dir, "{$results_dir}")
+    return content
+
+
 def compare_artifacts(artifacts_paths, artifacts_dir, baseline_artifacts_path):
     for artifact_path in artifacts_paths:
         current_dir = os.getcwd()
@@ -96,7 +105,11 @@ def compare_artifacts(artifacts_paths, artifacts_dir, baseline_artifacts_path):
         comparison_result = compare_files(baseline_artifact_path, actual_artifact_path)
         if comparison_result is False:
             if GOLDEN_WRITE:
-                shutil.copyfile(actual_artifact_path, original_baseline_artifact_path)
+                with open(actual_artifact_path, "r") as actual_file:
+                    actual_content = actual_file.read()
+                normalized = normalize_artifact_content(actual_content, current_dir, artifacts_dir)
+                with open(original_baseline_artifact_path, "w") as baseline_file:
+                    baseline_file.write(normalized)
             else:
                 assert (
                     False
