@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import json
 import logging
-import os
 from collections import OrderedDict
 from typing import Optional
 
@@ -10,6 +9,11 @@ from omegaconf import OmegaConf
 from ..base_recipe_template_processor import (
     BaseRecipeTemplateProcessor,
     ServerlessMeteringType,
+)
+from ...paths import (
+    get_recipe_templatization_path,
+    get_recipe_yaml_path,
+    resolve_project_path,
 )
 
 logger = logging.getLogger(__name__)
@@ -21,10 +25,14 @@ class NovaRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
     def __init__(
         self,
         staging_cfg: dict,
-        template_path: str = "./launcher/recipe_templatization/nova/nova_recipe_template_parameters.json",
+        template_path: Optional[str] = None,
         platform: str = "k8s",
     ):
-        self.template_path = template_path
+        if template_path is None:
+            template_path = get_recipe_templatization_path(
+                "nova", "nova_recipe_template_parameters.json"
+            )
+        self.template_path = resolve_project_path(template_path)
         self.platform = platform
         super().__init__(staging_cfg)
 
@@ -33,11 +41,13 @@ class NovaRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         with open(self.template_path) as f:
             self.template_data = json.load(f)
 
-        with open("./launcher/recipe_templatization/jumpstart_model-id_map.json", "r") as f:
+        with open(get_recipe_templatization_path("jumpstart_model-id_map.json"), "r") as f:
             self.recipe_jumpstart_model_id_mapping = json.load(f)
-        with open("./launcher/recipe_templatization/nova/nova_regional_parameters.json", "r") as f:
+        with open(
+            get_recipe_templatization_path("nova", "nova_regional_parameters.json"), "r"
+        ) as f:
             self.regional_parameters = json.load(f)
-        with open("./launcher/recipe_templatization/nova/nova_metadata.json", "r") as f:
+        with open(get_recipe_templatization_path("nova", "nova_metadata.json"), "r") as f:
             self.nova_metadata = json.load(f)
 
     def get_recipe_template(self, yaml_data: dict, template: dict, recipe_file_path: str = None) -> Optional[dict]:
@@ -131,7 +141,7 @@ class NovaRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         metadata = OrderedDict()
 
         try:
-            recipe_cfg = OmegaConf.load(os.path.join("./recipes_collection/recipes", recipe_file_path + ".yaml"))
+            recipe_cfg = OmegaConf.load(get_recipe_yaml_path(recipe_file_path))
             logger.info(f"Recipe config loaded successfully")
         except Exception as e:
             logger.error(f"Error loading recipe config: {e}")

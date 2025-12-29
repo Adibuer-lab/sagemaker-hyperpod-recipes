@@ -32,6 +32,7 @@ from ..efa import (
     efa_supported_instance,
     instanceWithMultipleEFAs,
 )
+from ..paths import get_recipe_templatization_path, get_recipe_yaml_path
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +62,9 @@ def _is_efa_supported(instance_type):
 
 def get_instance_type(cfg):
     instance_type = None
-    with open("./launcher/recipe_templatization/evaluation/evaluation_regional_parameters.json", "r") as f:
+    with open(
+        get_recipe_templatization_path("evaluation", "evaluation_regional_parameters.json"), "r"
+    ) as f:
         regional_parameters = json.load(f)
         instance_map = regional_parameters.get("js_model_name_instance_mapping", {})
         base_model_name = cfg.recipes.run.get("base_model_name", "")
@@ -276,7 +279,10 @@ class EvaluationK8SLauncher:
         launch_json["metadata"] = metadata
 
         # Add regional parameters for evaluation
-        with open("./launcher/recipe_templatization/evaluation/evaluation_regional_parameters.json", "r") as f:
+        with open(
+            get_recipe_templatization_path("evaluation", "evaluation_regional_parameters.json"),
+            "r",
+        ) as f:
             regional_params = json.load(f)
 
         recipe_container_mapping = regional_params.get("recipe_container_mapping", {})
@@ -312,8 +318,7 @@ class EvaluationK8SLauncher:
             recipe_path = untemplated_recipe_file_path
             if recipe_path.endswith(".yaml"):
                 recipe_path = recipe_path[:-5]
-            full_recipe_path = os.path.join("./recipes_collection/recipes", recipe_path + ".yaml")
-            untemplated_recipe = OmegaConf.load(full_recipe_path)
+            untemplated_recipe = OmegaConf.load(get_recipe_yaml_path(recipe_path))
             wrapped_recipe = OmegaConf.create({"recipes": untemplated_recipe})
             recipe_container = OmegaConf.to_container(wrapped_recipe, resolve=True)
             launch_json["training_recipe.json"] = recipe_container

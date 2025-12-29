@@ -18,8 +18,9 @@ import sys
 from typing import Tuple
 
 from validations_wrapper import validate_config
+from launcher.paths import get_launcher_scripts_path, get_recipes_collection_dir
 
-LAUNCHER_SCRIPT_PATH = "./launcher/nemo/nemo_framework_launcher/launcher_scripts/"
+LAUNCHER_SCRIPT_PATH = str(get_launcher_scripts_path())
 sys.path.append(LAUNCHER_SCRIPT_PATH)
 
 import hydra
@@ -343,7 +344,7 @@ def is_evaluation_recipe(cfg) -> bool:
     return False
 
 
-@hydra.main(config_path="recipes_collection", config_name="config", version_base="1.2")
+@hydra.main(config_path=str(get_recipes_collection_dir()), config_name="config", version_base="1.2")
 @validate_config
 def main(cfg):
     # Check if model exists and download if it doesn't

@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 import json
-import os
 from collections import OrderedDict
 from typing import Optional
 
 from omegaconf import OmegaConf
 
 from ..base_recipe_template_processor import BaseRecipeTemplateProcessor
+from ...paths import (
+    get_recipe_templatization_path,
+    get_recipe_yaml_path,
+    resolve_project_path,
+)
 
 
 class CheckpointlessRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
@@ -15,10 +19,14 @@ class CheckpointlessRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
     def __init__(
         self,
         staging_cfg: dict,
-        template_path: str = "./launcher/recipe_templatization/checkpointless/checkpointless_recipe_template_parameters.json",
+        template_path: Optional[str] = None,
         platform: str = "k8s",
     ):
-        self.template_path = template_path
+        if template_path is None:
+            template_path = get_recipe_templatization_path(
+                "checkpointless", "checkpointless_recipe_template_parameters.json"
+            )
+        self.template_path = resolve_project_path(template_path)
         self.platform = platform
         super().__init__(staging_cfg)
 
@@ -26,9 +34,14 @@ class CheckpointlessRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         """Load checkpointless template files."""
         with open(self.template_path) as f:
             self.template_data = json.load(f)
-        with open("./launcher/recipe_templatization/jumpstart_model-id_map.json", "r") as f:
+        with open(get_recipe_templatization_path("jumpstart_model-id_map.json"), "r") as f:
             self.recipe_jumpstart_model_id_mapping = json.load(f)
-        with open("./launcher/recipe_templatization/checkpointless/checkpointless_regional_parameters.json", "r") as f:
+        with open(
+            get_recipe_templatization_path(
+                "checkpointless", "checkpointless_regional_parameters.json"
+            ),
+            "r",
+        ) as f:
             self.regional_parameters = json.load(f)
 
     def get_recipe_template(self, yaml_data: dict, template: dict, recipe_file_path: str = None) -> Optional[dict]:
@@ -51,7 +64,7 @@ class CheckpointlessRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
     def get_recipe_metadata(self, recipe_file_path: str) -> OrderedDict:
         """Generate metadata for checkpointless recipes."""
         metadata = OrderedDict()
-        recipe_cfg = OmegaConf.load(os.path.join("./recipes_collection/recipes", recipe_file_path + ".yaml"))
+        recipe_cfg = OmegaConf.load(get_recipe_yaml_path(recipe_file_path))
         recipe_metadata_helpers = self.matched_template_group["recipe_metadata_helpers"]
 
         # Get Name

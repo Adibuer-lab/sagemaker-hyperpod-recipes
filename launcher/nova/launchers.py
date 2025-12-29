@@ -35,6 +35,7 @@ from ..efa import (
 from ..recipe_templatization.nova.nova_recipe_template_processor import (
     NovaRecipeTemplateProcessor,
 )
+from ..paths import get_recipe_templatization_path, get_recipe_yaml_path
 from .constants.ppo_container_constants import (
     JOB_TASK_TYPE_DICT,
     JOB_TYPE_DICT,
@@ -110,8 +111,8 @@ def get_recipe_name_from_path(recipe_file_path: str) -> str:
 
 def get_nova_metadata():
     recipe_name = get_recipe_name_from_path(get_recipe_file_path())
-    nova_metadata_path = "./launcher/recipe_templatization/nova/nova_metadata.json"
-    if not os.path.exists(nova_metadata_path):
+    nova_metadata_path = get_recipe_templatization_path("nova", "nova_metadata.json")
+    if not nova_metadata_path.exists():
         raise ValueError(f"Nova metadata not found at {nova_metadata_path}")
     nova_metadata = None
     with open(nova_metadata_path, "r") as f:
@@ -466,8 +467,7 @@ class NovaK8SLauncher:
 
         untemplated_recipe_file_path = get_recipe_file_path()
         if untemplated_recipe_file_path:
-            full_recipe_path = os.path.join("./recipes_collection/recipes", untemplated_recipe_file_path + ".yaml")
-            untemplated_recipe = OmegaConf.load(full_recipe_path)
+            untemplated_recipe = OmegaConf.load(get_recipe_yaml_path(untemplated_recipe_file_path))
             wrapped_recipe = OmegaConf.create({"recipes": untemplated_recipe})
             recipe_container = OmegaConf.to_container(wrapped_recipe, resolve=True)
             launch_json["training_recipe.json"] = recipe_container
@@ -1403,8 +1403,7 @@ class SMNovaSMTJLauncherRFT(NovaK8SLauncher):
                 logger.error(f"Failed to add recipe templatization metadata: {e}")
                 raise Exception
 
-            full_recipe_path = os.path.join("./recipes_collection/recipes", self.recipe_file_path + ".yaml")
-            untemplated_recipe = OmegaConf.load(full_recipe_path)
+            untemplated_recipe = OmegaConf.load(get_recipe_yaml_path(self.recipe_file_path))
             wrapped_recipe = OmegaConf.create({"recipes": untemplated_recipe})
             recipe_container = OmegaConf.to_container(wrapped_recipe, resolve=True)
             launch_json["training_recipe.json"] = recipe_container

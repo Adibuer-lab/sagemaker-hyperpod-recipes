@@ -37,6 +37,9 @@ dependencies = [
     "sagemaker>=2.0.0",
 ]
 
+[project.scripts]
+aws-hp-launcher = "launcher.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/aws/sagemaker-hyperpod-recipes"
 Repository = "https://github.com/aws/sagemaker-hyperpod-recipes"
@@ -45,7 +48,17 @@ Repository = "https://github.com/aws/sagemaker-hyperpod-recipes"
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["launcher"]
+packages = ["launcher", "utils", "hyperpod_recipes"]
+include = [
+    "launcher/**",
+    "recipes_collection/**",
+    "launcher_scripts/**",
+    "template/**",
+    "utils/**",
+    "hyperpod_recipes/**",
+    "main.py",
+    "validations_wrapper.py",
+]
 
 [tool.hatch.build.targets.wheel.force-include]
 "launcher/nemo/nemo_framework_launcher/launcher_scripts/nemo_launcher" = "nemo_launcher"

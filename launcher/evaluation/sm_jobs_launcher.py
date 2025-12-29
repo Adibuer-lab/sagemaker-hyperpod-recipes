@@ -23,6 +23,7 @@ from omegaconf import OmegaConf
 from ..recipe_templatization.evaluation.evaluation_recipe_template_processor import (
     EvaluationRecipeTemplateProcessor,
 )
+from ..paths import get_recipe_yaml_path
 from .launchers import EvaluationK8SLauncher, get_recipe_file_path
 
 logger = logging.getLogger(__name__)
@@ -331,8 +332,7 @@ echo "Job {{{{name}}}} submission file created"
         try:
             untemplated_recipe_file_path = get_recipe_file_path()
             if untemplated_recipe_file_path:
-                full_recipe_path = os.path.join("./recipes_collection/recipes", untemplated_recipe_file_path + ".yaml")
-                untemplated_recipe = OmegaConf.load(full_recipe_path)
+                untemplated_recipe = OmegaConf.load(get_recipe_yaml_path(untemplated_recipe_file_path))
                 wrapped_recipe = OmegaConf.create({"recipes": untemplated_recipe})
                 recipe_container = OmegaConf.to_container(wrapped_recipe, resolve=True)
                 launch_json["training_recipe.json"] = recipe_container

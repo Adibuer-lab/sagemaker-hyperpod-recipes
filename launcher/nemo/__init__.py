@@ -11,8 +11,14 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+import sys
 
 from . import constants
+from ..paths import get_launcher_scripts_path
+
+_launcher_scripts_path = str(get_launcher_scripts_path())
+if _launcher_scripts_path not in sys.path:
+    sys.path.insert(0, _launcher_scripts_path)
 
 try:
     from . import launchers, recipe_stages, slurm_launcher, stages

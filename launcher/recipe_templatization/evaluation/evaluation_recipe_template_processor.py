@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 import copy
 import json
-import os
 from collections import OrderedDict
 from typing import Optional
 
 from omegaconf import DictConfig, OmegaConf
 
 from ..base_recipe_template_processor import BaseRecipeTemplateProcessor
+from ...paths import (
+    get_recipe_templatization_path,
+    get_recipe_yaml_path,
+    resolve_project_path,
+)
 
 
 class EvaluationRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
@@ -16,10 +20,14 @@ class EvaluationRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
     def __init__(
         self,
         staging_cfg: dict,
-        template_path: str = "./launcher/recipe_templatization/evaluation/evaluation_recipe_template_parameters.json",
+        template_path: Optional[str] = None,
         platform: str = "k8s",
     ):
-        self.template_path = template_path
+        if template_path is None:
+            template_path = get_recipe_templatization_path(
+                "evaluation", "evaluation_recipe_template_parameters.json"
+            )
+        self.template_path = resolve_project_path(template_path)
         self.platform = platform
         super().__init__(staging_cfg)
 
@@ -28,7 +36,12 @@ class EvaluationRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         with open(self.template_path) as f:
             self.template_data = json.load(f)
 
-        with open("./launcher/recipe_templatization/evaluation/evaluation_regional_parameters.json", "r") as f:
+        with open(
+            get_recipe_templatization_path(
+                "evaluation", "evaluation_regional_parameters.json"
+            ),
+            "r",
+        ) as f:
             self.regional_parameters = json.load(f)
 
     def get_recipe_template(self, yaml_data: dict, template: dict, recipe_file_path: str = None) -> Optional[dict]:
@@ -54,7 +67,12 @@ class EvaluationRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
     def get_instance_type(self, cfg, recipe_file_path):
         instance_type = None
         if "open_source_deterministic_eval" in recipe_file_path:
-            with open("./launcher/recipe_templatization/evaluation/evaluation_regional_parameters.json", "r") as f:
+            with open(
+                get_recipe_templatization_path(
+                    "evaluation", "evaluation_regional_parameters.json"
+                ),
+                "r",
+            ) as f:
                 regional_parameters = json.load(f)
                 instance_map = regional_parameters.get("js_model_name_instance_mapping", {})
                 base_model_name = cfg.recipes.run.get("base_model_name", "")
@@ -84,7 +102,7 @@ class EvaluationRecipeTemplateProcessor(BaseRecipeTemplateProcessor):
         metadata = OrderedDict()
 
         try:
-            recipe_cfg = OmegaConf.load(os.path.join("./recipes_collection/recipes", recipe_file_path + ".yaml"))
+            recipe_cfg = OmegaConf.load(get_recipe_yaml_path(recipe_file_path))
         except Exception as e:
             raise Exception(f"Error loading recipe config: {e}")
 

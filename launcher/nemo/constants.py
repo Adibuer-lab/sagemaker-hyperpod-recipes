@@ -11,7 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-from pathlib import Path
+from launcher.paths import get_project_root
 
 SM_ADAPTER_REPO = "https://github.com/aws/sagemaker-hyperpod-training-adapter-for-nemo.git"
 NEMO_REPO = "https://github.com/NVIDIA/NeMo.git"
@@ -42,4 +42,4 @@ NEURONX_REPO_TAG = "main"
 NEURONX_CONF_PATH = "examples/conf"
 
 # utility directory to more easily navigate to other parts of the package
-ROOT_DIR = Path(__file__).resolve().parent.parent.parent  # package root
+ROOT_DIR = get_project_root()
