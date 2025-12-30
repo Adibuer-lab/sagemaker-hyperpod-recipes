@@ -24,9 +24,9 @@ base_results_dir: null # Location to store the results, checkpoints and logs.
 container: null
 
 git:
-  repo_url_or_path: null
+  repo_url_or_path: https://github.com/Adibuer-lab/sagemaker-hyperpod-training-adapter-for-nemo.git
   branch: null
-  commit: null
+  commit: a15437e2d8a47b70f48941d2a432990abafc72b5
   entry_script: null
   token: null
   update_adapter: false # if true it will re-install the Adapter code but not its dependencies
