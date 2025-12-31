@@ -131,9 +131,14 @@ class SMTrainingGPURecipe(SMTraining):
         candidates = []
         if env_root:
             candidates.append(Path(env_root))
+        # Common container location (image build clones here)
+        candidates.append(Path("/opt/hyperpod-adapter"))
         # Default: adapter repo is a sibling of the recipes repo root
         candidates.append(ROOT_DIR.parent / "sagemaker-hyperpod-training-adapter-for-nemo")
         candidates.append(ROOT_DIR / "sagemaker-hyperpod-training-adapter-for-nemo")
+        # Fallback: search from current working directory parents
+        cwd = Path.cwd()
+        candidates.extend(parent / "sagemaker-hyperpod-training-adapter-for-nemo" for parent in (cwd, *cwd.parents))
         for root in candidates:
             cfg_path = root / rel_path
             if cfg_path.exists():
