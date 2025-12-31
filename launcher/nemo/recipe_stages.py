@@ -320,6 +320,7 @@ class SMTrainingGPURecipe(SMTraining):
             if isinstance(targets, str):
                 targets = [targets]
             _set("model.peft.target_modules", targets)
+            _set("use_smp_model", False)
 
         # DPO
         if isinstance(trainer_type, str) and trainer_type.strip().lower() == "dpo":
