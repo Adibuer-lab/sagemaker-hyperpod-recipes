@@ -321,6 +321,7 @@ class SMTrainingGPURecipe(SMTraining):
                 targets = [targets]
             _set("model.peft.target_modules", targets)
             _set("use_smp_model", False)
+            _set("model.delayed_param", False)
 
         # DPO
         if isinstance(trainer_type, str) and trainer_type.strip().lower() == "dpo":
