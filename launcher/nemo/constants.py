@@ -24,6 +24,27 @@ SM_ADAPTER_MODEL_TYPE_TO_CODE_PATH = {
     "mixtral": "examples/mixtral/mixtral_pretrain.py",
 }
 
+# Adapter config files keyed by model family. These are used to materialize
+# a k8s-mounted Hydra config that matches the adapter entrypoints.
+SM_ADAPTER_MODEL_TYPE_TO_CONFIG = {
+    "deepseek": {
+        "config_name": "smp_deepseek_config",
+        "config_path": "examples/deepseek/conf/deepseek_config.yaml",
+    },
+    "llama": {
+        "config_name": "smp_llama_config",
+        "config_path": "examples/llama/conf/smp_llama_config.yaml",
+    },
+    "mistral": {
+        "config_name": "mistral_config",
+        "config_path": "examples/mistral/conf/smp_mistral_config.yaml",
+    },
+    "mixtral": {
+        "config_name": "smp_mixtral_config",
+        "config_path": "examples/mixtral/conf/smp_mixtral_config.yaml",
+    },
+}
+
 HPCT_MODEL_TASK_TO_CODE_PATH = {
     "llama_pretrain": "/opt/amazon/examples/llama3/llama3_70b_pretrain_checkpointless.py",
     "llama_lora": "/opt/amazon/examples/llama3/llama3_70b_peft_checkpointless.py",

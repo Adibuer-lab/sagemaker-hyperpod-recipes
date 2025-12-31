@@ -11,9 +11,10 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+import os
 import shutil
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import omegaconf
 from nemo_launcher.utils.job_utils import JobPaths
@@ -30,6 +31,7 @@ from .constants import (
     NEURONX_REPO_URI,
     ROOT_DIR,
     SM_ADAPTER_MODEL_TYPE_TO_CODE_PATH,
+    SM_ADAPTER_MODEL_TYPE_TO_CONFIG,
     SM_ADAPTER_REPO,
 )
 from .stages import SMTraining, get_num_nodes, set_multinode_envs
@@ -71,6 +73,253 @@ class SMTrainingGPURecipe(SMTraining):
     def get_stage_config_choice(self):
         # [TODO] check if need to override
         return super().get_stage_config_choice()
+
+    def _copy_k8s_helm_chart(self, template_root: str, job_path: JobPaths):
+        super()._copy_k8s_helm_chart(template_root, job_path)
+
+        # Copy any adapter config files so they can be mounted at /config.
+        hydra_config_path = Path(job_path.folder / "k8s_template" / "config")
+        for path in job_path.folder.glob("*_config.yaml"):
+            shutil.copy(path, hydra_config_path)
+
+    def _maybe_write_additional_k8s_configs(self, job_path: JobPaths, stage_cfg_path: Path) -> None:
+        """
+        For LLMFT recipes on k8s, generate an adapter-compatible Hydra config
+        (e.g., smp_llama_config.yaml) so the adapter entrypoint can load it.
+        """
+        model_type = OmegaConf.select(self.cfg, "recipes.run.model_type", default=None)
+        if model_type not in {"llm_finetuning_aws", "hf"}:
+            return
+
+        model_key = self._get_adapter_model_key()
+        if model_key is None:
+            return
+
+        cfg_info = SM_ADAPTER_MODEL_TYPE_TO_CONFIG.get(model_key)
+        if not cfg_info:
+            return
+
+        base_cfg_path = self._resolve_adapter_config_path(cfg_info["config_path"])
+        adapter_cfg = OmegaConf.load(base_cfg_path)
+
+        self._apply_llmft_recipe_overrides(adapter_cfg, self.cfg.recipes)
+
+        out_path = job_path.folder / f"{cfg_info['config_name']}.yaml"
+        OmegaConf.save(config=adapter_cfg, f=out_path)
+
+    def _get_adapter_model_key(self) -> Optional[str]:
+        """
+        Infer adapter model key from the recipe choice (e.g., llama, deepseek).
+        """
+        try:
+            choice_model_type, _ = self.get_stage_config_choice()
+        except Exception:
+            return None
+        if not choice_model_type:
+            return None
+        # Expected format: "fine-tuning/llama/..."
+        parts = choice_model_type.split("/")
+        if len(parts) >= 2:
+            return parts[1]
+        return None
+
+    def _resolve_adapter_config_path(self, rel_path: str) -> Path:
+        """
+        Resolve adapter config path using an optional env override and common repo layout.
+        """
+        env_root = os.environ.get("HYPERPOD_ADAPTER_ROOT", "").strip()
+        candidates = []
+        if env_root:
+            candidates.append(Path(env_root))
+        # Default: adapter repo is a sibling of the recipes repo root
+        candidates.append(ROOT_DIR.parent / "sagemaker-hyperpod-training-adapter-for-nemo")
+        candidates.append(ROOT_DIR / "sagemaker-hyperpod-training-adapter-for-nemo")
+        for root in candidates:
+            cfg_path = root / rel_path
+            if cfg_path.exists():
+                return cfg_path
+        raise FileNotFoundError(
+            "Unable to locate adapter config. Set HYPERPOD_ADAPTER_ROOT or ensure "
+            "sagemaker-hyperpod-training-adapter-for-nemo is present alongside the recipes repo."
+        )
+
+    @staticmethod
+    def _apply_llmft_recipe_overrides(adapter_cfg: OmegaConf, recipe_cfg: OmegaConf) -> None:
+        """
+        Map LLMFT recipe fields into adapter schema.
+        Only updates known adapter fields to avoid schema violations.
+        """
+
+        def _get(path: str, default=None):
+            return OmegaConf.select(recipe_cfg, path, default=default)
+
+        def _set(path: str, value):
+            if value is None:
+                return
+            if isinstance(value, str) and not value.strip():
+                return
+            OmegaConf.update(adapter_cfg, path, value, merge=False)
+
+        # Trainer
+        _set("trainer.devices", _get("trainer.devices"))
+        _set("trainer.num_nodes", _get("trainer.num_nodes"))
+        _set("trainer.max_steps", _get("training_config.training_args.max_steps"))
+        _set("trainer.log_every_n_steps", _get("training_config.training_args.logging_steps"))
+        eval_steps = _get("training_config.training_args.eval_steps")
+        if eval_steps is not None:
+            _set("trainer.val_check_interval", eval_steps)
+
+        # Run/exp_manager
+        _set("run.name", _get("run.name"))
+        _set("run.results_dir", _get("run.results_dir"))
+        exp_dir = _get("training_config.training_args.training_dir")
+        if exp_dir:
+            _set("exp_manager.exp_dir", exp_dir)
+        elif _get("run.results_dir"):
+            _set("exp_manager.exp_dir", _get("run.results_dir"))
+
+        # Model basics
+        _set("model.hf_model_name_or_path", _get("training_config.model_config.model_name_or_path"))
+        # LLMFT implies finetune
+        trainer_type = _get("training_config.training_args.trainer_type")
+        pretrain_mode = _get("training_config.training_args.pretrain_mode")
+        if pretrain_mode:
+            _set("model.do_finetune", False)
+        else:
+            _set("model.do_finetune", True)
+        _set("model.seed", _get("training_config.training_args.seed"))
+        _set("model.multi_modal", _get("training_config.model_config.multimodal"))
+
+        attn_impl = _get("training_config.model_config.attn_implementation")
+        if isinstance(attn_impl, str):
+            attn_norm = attn_impl.strip().lower()
+            if "flash" in attn_norm:
+                _set("model.use_flash_attention", True)
+            elif attn_norm in {"sdpa", "eager"}:
+                _set("model.use_flash_attention", False)
+
+        # Architecture overrides (only if present in recipe)
+        arch_map = {
+            "training_config.model_config.num_hidden_layers": "model.num_hidden_layers",
+            "training_config.model_config.hidden_size": "model.hidden_size",
+            "training_config.model_config.num_attention_heads": "model.num_attention_heads",
+            "training_config.model_config.intermediate_size": "model.intermediate_size",
+            "training_config.model_config.initializer_range": "model.initializer_range",
+            "training_config.model_config.layernorm_epsilon": "model.layernorm_epsilon",
+            "training_config.model_config.vocab_size": "model.vocab_size",
+            "training_config.model_config.num_key_value_heads": "model.num_key_value_heads",
+            "training_config.model_config.rope_theta": "model.rope_theta",
+            "training_config.model_config.rope_scaling": "model.rope_scaling",
+        }
+        for src, dst in arch_map.items():
+            _set(dst, _get(src))
+
+        # Context length
+        max_len = _get("training_config.training_args.max_len")
+        if max_len is not None:
+            _set("model.max_context_width", max_len)
+
+        # Batch sizes
+        micro_bs = _get("training_config.training_args.micro_train_batch_size")
+        train_bs = _get("training_config.training_args.train_batch_size")
+        _set("model.train_batch_size", micro_bs if micro_bs is not None else train_bs)
+
+        # Gradient clipping
+        grad_clip = _get("training_config.training_args.gradient_clipping_threshold")
+        if grad_clip is None:
+            grad_clip = _get("training_config.training_args.max_norm")
+        if _get("training_config.training_args.gradient_clipping") is False:
+            grad_clip = 0
+        _set("model.grad_clip", grad_clip)
+
+        # Optimizer
+        _set("model.optim.lr", _get("training_config.training_args.learning_rate"))
+        _set("model.optim.weight_decay", _get("training_config.training_args.weight_decay"))
+        _set("model.optim.betas", _get("training_config.training_args.adam_betas"))
+
+        lr_sched = _get("training_config.training_args.lr_scheduler")
+        if lr_sched:
+            if str(lr_sched).lower() == "cosine":
+                _set("model.optim.sched.name", "CosineAnnealing")
+
+        # Warmup steps from ratio if possible
+        warmup_ratio = _get("training_config.training_args.lr_warmup_ratio")
+        if warmup_ratio is not None:
+            try:
+                max_steps = OmegaConf.select(adapter_cfg, "trainer.max_steps", default=None)
+                if max_steps:
+                    warmup_steps = int(float(warmup_ratio) * int(max_steps))
+                    _set("model.optim.sched.warmup_steps", warmup_steps)
+            except Exception:
+                pass
+
+        # Logging/checkpoint intervals
+        save_steps = _get("training_config.training_args.save_steps")
+        if save_steps is not None:
+            _set("exp_manager.checkpoint_callback_params.every_n_train_steps", save_steps)
+
+        # Data paths
+        train_path = _get("training_config.datasets.train_data.file_path")
+        val_path = _get("training_config.datasets.val_data.file_path")
+        if train_path:
+            _set("model.data.train_dir", train_path)
+        if val_path:
+            _set("model.data.val_dir", val_path)
+        if train_path or val_path:
+            _set("model.data.use_synthetic_data", False)
+
+        # FSDP/strategy config (map common recipe enums)
+        fsdp_cfg = _get("training_config.training_args.strategy.fsdp_config")
+        if isinstance(fsdp_cfg, omegaconf.DictConfig):
+            def _norm_enum(value: Optional[str]) -> Optional[str]:
+                if value is None:
+                    return None
+                if not isinstance(value, str):
+                    return value
+                return value.strip().lower()
+
+            shard_map = {
+                "no_shard": "no_shard",
+                "shard_grad_op": "shard_grad_op",
+                "hybrid_shard": "hybrid_shard",
+                "hybrid_shard_zero2": "_hybrid_shard_zero2",
+                "full_shard": "full_shard",
+            }
+            wrap_map = {
+                "transformer_based_wrap": "transformer_auto_wrap_policy",
+                "size_based_wrap": "size_based_auto_wrap_policy",
+            }
+            backward_map = {
+                "backward_pre": "backward_pre",
+                "backward_post": "backward_post",
+            }
+
+            sharding = shard_map.get(_norm_enum(fsdp_cfg.get("sharding_strategy")))
+            _set("model.sharding_strategy", sharding)
+            wrap = wrap_map.get(_norm_enum(fsdp_cfg.get("auto_wrap_policy")))
+            _set("model.auto_wrap_policy", wrap)
+            back_prefetch = backward_map.get(_norm_enum(fsdp_cfg.get("backward_prefetch")))
+            _set("model.backward_fetch_policy", back_prefetch)
+            _set("model.forward_prefetch", fsdp_cfg.get("forward_prefetch"))
+            _set("model.limit_all_gathers", fsdp_cfg.get("limit_all_gathers"))
+            _set("model.use_orig_param", fsdp_cfg.get("use_orig_params"))
+
+        # PEFT / LoRA
+        peft_type = _get("training_config.model_config.peft_config.peft_type")
+        if peft_type:
+            _set("model.peft.peft_type", peft_type)
+            _set("model.peft.rank", _get("training_config.model_config.peft_config.r"))
+            _set("model.peft.alpha", _get("training_config.model_config.peft_config.lora_alpha"))
+            _set("model.peft.dropout", _get("training_config.model_config.peft_config.lora_dropout"))
+            targets = _get("training_config.model_config.peft_config.target_modules")
+            if isinstance(targets, str):
+                targets = [targets]
+            _set("model.peft.target_modules", targets)
+
+        # DPO
+        if isinstance(trainer_type, str) and trainer_type.strip().lower() == "dpo":
+            _set("model.dpo.enabled", True)
+            _set("model.dpo.beta", _get("training_config.training_args.beta"))
 
 
 class SMTrainingGPURecipeElastic(SMTrainingGPURecipe):
@@ -144,7 +393,10 @@ class SMTrainingGPURecipeElastic(SMTrainingGPURecipe):
         Based on https://github.com/NVIDIA/NeMo-Framework-Launcher/blob/23.11/launcher_scripts/nemo_launcher/core/stages.py#L608
         """
         if self.cluster == "k8s":
-            return f"--config-path=/config"
+            model_type = OmegaConf.select(self.cfg, "recipes.run.model_type", default=None)
+            if model_type in {"llm_finetuning_aws", "hf"}:
+                return "--config-path=/config"
+            return "--config-path=/config --config-name=config.yaml"
         return f"--config-path={stage_cfg_path.parents[0]} --config-name={stage_cfg_path.name}"
 
 

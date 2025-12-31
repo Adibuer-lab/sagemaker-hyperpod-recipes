@@ -706,6 +706,10 @@ class SMTraining(Training):
         else:
             stage_cfg_path = job_path.config_file
 
+        # Allow subclasses to materialize additional config files for k8s jobs.
+        if self.cluster == "k8s":
+            self._maybe_write_additional_k8s_configs(job_path, stage_cfg_path)
+
         if self.cluster == "sm_jobs":
             if is_custom:
                 raise RuntimeError("SM jobs launcher is not supported with custom training.")
@@ -802,8 +806,19 @@ class SMTraining(Training):
         Based on https://github.com/NVIDIA/NeMo-Framework-Launcher/blob/23.11/launcher_scripts/nemo_launcher/core/stages.py#L608
         """
         if self.cluster == "k8s":
+            model_type = OmegaConf.select(self.cfg, "recipes.run.model_type", default=None)
+            if model_type in {"llm_finetuning_aws", "hf"}:
+                # LLMFT adapter entrypoints expect their own config name (e.g., smp_llama_config).
+                return "--config-path=/config"
             return "--config-path=/config --config-name=config.yaml"
         return f"--config-path={stage_cfg_path.parents[0]} --config-name={stage_cfg_path.name}"
+
+    def _maybe_write_additional_k8s_configs(self, job_path: JobPaths, stage_cfg_path: Path) -> None:
+        """
+        Hook for subclasses to write extra config files into the k8s template folder.
+        Default: no-op.
+        """
+        return None
 
     def insert_git_token(self, repo_url_or_path: str, token: str) -> str:
         """
