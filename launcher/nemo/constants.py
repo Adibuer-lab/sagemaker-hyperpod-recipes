@@ -22,6 +22,7 @@ SM_ADAPTER_MODEL_TYPE_TO_CODE_PATH = {
     "llama": "examples/llama/llama_pretrain.py",
     "mistral": "examples/mistral/mistral_pretrain.py",
     "mixtral": "examples/mixtral/mixtral_pretrain.py",
+    "qwen": "examples/qwen/qwen_pretrain.py",
 }
 
 # Adapter config files keyed by model family. These are used to materialize
@@ -42,6 +43,10 @@ SM_ADAPTER_MODEL_TYPE_TO_CONFIG = {
     "mixtral": {
         "config_name": "smp_mixtral_config",
         "config_path": "examples/mixtral/conf/smp_mixtral_config.yaml",
+    },
+    "qwen": {
+        "config_name": "qwen_config",
+        "config_path": "examples/qwen/conf/qwen_config.yaml",
     },
 }
 
