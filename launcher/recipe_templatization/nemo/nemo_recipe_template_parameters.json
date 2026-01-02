@@ -21,56 +21,180 @@
         },
         "entry_script": "{{entry_script}}",
         "script_args": [
-          {"--dataset-root": "{{dataset_root}}"},
-          {"--output-dir": "{{results_directory}}"},
-          {"--hf-model-id": "{{hf_model_id}}"},
-          {"--import-output": "{{results_directory}}/checkpoints/qwen25_14b_instruct.nemo"},
-          {"--seq-length": "{{seq_length}}"},
-          {"--micro-batch-size": "{{micro_batch_size}}"},
-          {"--global-batch-size": "{{global_batch_size}}"},
-          {"--max-steps": "{{max_steps}}"},
-          {"--learning-rate": "{{learning_rate}}"},
-          {"--warmup-steps": "{{warmup_steps}}"},
-          {"--val-check-interval": "{{val_check_interval}}"},
-          {"--log-every-n-steps": "{{log_every_n_steps}}"},
-          {"--num-workers": "{{num_workers}}"},
-          {"--peft-scheme": "{{peft_scheme}}"},
-          {"--seed": "{{seed}}"}
+          {
+            "--dataset-root": "{{dataset_root}}"
+          },
+          {
+            "--output-dir": "{{results_directory}}"
+          },
+          {
+            "--hf-model-id": "{{hf_model_id}}"
+          },
+          {
+            "--import-output": "{{results_directory}}/checkpoints/qwen25_14b_instruct.nemo"
+          },
+          {
+            "--restore-path": "{{restore_path}}"
+          },
+          {
+            "--seq-length": "{{seq_length}}"
+          },
+          {
+            "--micro-batch-size": "{{micro_batch_size}}"
+          },
+          {
+            "--global-batch-size": "{{global_batch_size}}"
+          },
+          {
+            "--max-steps": "{{max_steps}}"
+          },
+          {
+            "--learning-rate": "{{learning_rate}}"
+          },
+          {
+            "--warmup-steps": "{{warmup_steps}}"
+          },
+          {
+            "--val-check-interval": "{{val_check_interval}}"
+          },
+          {
+            "--log-every-n-steps": "{{log_every_n_steps}}"
+          },
+          {
+            "--num-workers": "{{num_workers}}"
+          },
+          {
+            "--peft-scheme": "{{peft_scheme}}"
+          },
+          {
+            "--seed": "{{seed}}"
+          }
         ]
       },
       "recipe_override_parameters": {
-        "name": {"type": "string", "required": true, "default": "nemo2-qwen25-fc-sft"},
-        "results_directory": {"type": "string", "required": true, "default": ""},
-        "nodes": {"type": "integer", "required": true, "default": 1, "min": 1},
-        "ntasks_per_node": {"type": "integer", "required": true, "default": 8, "min": 1},
-        "entry_script": {"type": "string", "required": true, "default": "examples/nemo2/qwen25_fc_sft.py"},
-        "dataset_root": {"type": "string", "required": true, "default": ""},
+        "name": {
+          "type": "string",
+          "required": true,
+          "default": "nemo2-qwen25-fc-sft"
+        },
+        "results_directory": {
+          "type": "string",
+          "required": true,
+          "default": ""
+        },
+        "nodes": {
+          "type": "integer",
+          "required": true,
+          "default": 1,
+          "min": 1
+        },
+        "ntasks_per_node": {
+          "type": "integer",
+          "required": true,
+          "default": 8,
+          "min": 1
+        },
+        "entry_script": {
+          "type": "string",
+          "required": true,
+          "default": "examples/nemo2/qwen25_fc_sft.py"
+        },
+        "dataset_root": {
+          "type": "string",
+          "required": true,
+          "default": ""
+        },
         "hf_model_id": {
           "type": "string",
           "required": true,
           "default": "Qwen/Qwen2.5-Coder-14B-Instruct"
         },
-        "seq_length": {"type": "integer", "required": true, "default": 4096, "min": 1},
-        "micro_batch_size": {"type": "integer", "required": true, "default": 1, "min": 1},
-        "global_batch_size": {"type": "integer", "required": true, "default": 8, "min": 1},
-        "max_steps": {"type": "integer", "required": true, "default": 50, "min": 1},
-        "learning_rate": {"type": "float", "required": true, "default": 1e-5, "min": 0},
-        "warmup_steps": {"type": "integer", "required": true, "default": 5, "min": 0},
-        "val_check_interval": {"type": "integer", "required": true, "default": 200, "min": 1},
-        "log_every_n_steps": {"type": "integer", "required": true, "default": 1, "min": 1},
-        "num_workers": {"type": "integer", "required": true, "default": 2, "min": 0},
+        "seq_length": {
+          "type": "integer",
+          "required": true,
+          "default": 4096,
+          "min": 1
+        },
+        "micro_batch_size": {
+          "type": "integer",
+          "required": true,
+          "default": 1,
+          "min": 1
+        },
+        "global_batch_size": {
+          "type": "integer",
+          "required": true,
+          "default": 8,
+          "min": 1
+        },
+        "max_steps": {
+          "type": "integer",
+          "required": true,
+          "default": 50,
+          "min": 1
+        },
+        "learning_rate": {
+          "type": "float",
+          "required": true,
+          "default": 1e-05,
+          "min": 0
+        },
+        "warmup_steps": {
+          "type": "integer",
+          "required": true,
+          "default": 5,
+          "min": 0
+        },
+        "val_check_interval": {
+          "type": "integer",
+          "required": true,
+          "default": 200,
+          "min": 1
+        },
+        "log_every_n_steps": {
+          "type": "integer",
+          "required": true,
+          "default": 1,
+          "min": 1
+        },
+        "num_workers": {
+          "type": "integer",
+          "required": true,
+          "default": 2,
+          "min": 0
+        },
         "peft_scheme": {
           "type": "string",
           "required": true,
-          "enum": ["none", "lora"],
+          "enum": [
+            "none",
+            "lora"
+          ],
           "default": "none"
         },
-        "seed": {"type": "integer", "required": true, "default": 42, "min": 0}
+        "seed": {
+          "type": "integer",
+          "required": true,
+          "default": 42,
+          "min": 0
+        },
+        "restore_path": {
+          "type": "string",
+          "required": false,
+          "default": ""
+        }
       },
       "recipe_metadata_helpers": {
-        "fine_tuning_techniques": {"sft": "SFT"},
-        "peft_techniques": {"lora": "LoRA"},
-        "hardware_types": {"gpu": "GPU", "trn": "TRN"}
+        "fine_tuning_techniques": {
+          "sft": "SFT"
+        },
+        "peft_techniques": {
+          "lora": "LoRA"
+        },
+        "hardware_types": {
+          "gpu": "GPU",
+          "trn": "TRN"
+        }
       }
     }
   }

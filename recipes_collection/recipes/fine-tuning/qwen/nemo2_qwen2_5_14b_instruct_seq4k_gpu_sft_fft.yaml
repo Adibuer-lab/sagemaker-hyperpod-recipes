@@ -25,7 +25,8 @@ script_args:
   - --dataset-root: ${oc.env:FC_NEMO2_DATASET_ROOT,""}
   - --output-dir: ${recipes.run.results_dir}
   - --hf-model-id: ${oc.env:FC_NEMO2_HF_MODEL_ID,"Qwen/Qwen2.5-Coder-14B-Instruct"}
-  - --import-output: ${recipes.run.results_dir}/checkpoints/qwen25_14b_instruct.nemo
+  - --import-output: ${oc.env:FC_NEMO2_IMPORT_OUTPUT,${recipes.run.results_dir}/checkpoints/qwen25_14b_instruct.nemo}
+  - --restore-path: ${oc.env:FC_NEMO2_IMPORT_OUTPUT,${recipes.run.results_dir}/checkpoints/qwen25_14b_instruct.nemo}
   - --seq-length: ${oc.env:FC_NEMO2_SEQ_LEN,4096}
   - --micro-batch-size: ${oc.env:FC_NEMO2_MICRO_BS,1}
   - --global-batch-size: ${oc.env:FC_NEMO2_GLOBAL_BS,8}
