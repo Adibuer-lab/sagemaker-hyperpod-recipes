@@ -187,7 +187,12 @@ def _validate_clean_pod_policy_argument(config: DictConfig) -> None:
     cleanpod_policy_argument_name = "cluster.cluster_config.cleanPodPolicy"
     cleanpod_policy_argument = get_argument(config, cleanpod_policy_argument_name)
     if cleanpod_policy_argument is not None:
-        supported_cleanpod_policies = ["All", "Running", "None"]
+        # HyperPodPyTorchJob supports OnlyComplete instead of Running.
+        use_hyperpod_pytorch_job = get_argument(config, "cluster.cluster_config.use_hyperpod_pytorch_job")
+        if use_hyperpod_pytorch_job:
+            supported_cleanpod_policies = ["All", "OnlyComplete", "None"]
+        else:
+            supported_cleanpod_policies = ["All", "Running", "None"]
         if cleanpod_policy_argument not in supported_cleanpod_policies:
             raise ValueError("Provided cleanPodPolicy is not supported")
 
