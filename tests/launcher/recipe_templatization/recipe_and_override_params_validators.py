@@ -164,6 +164,8 @@ def validate_override_parameters_templatization(
         recipe_file_path_lower = recipe_file_path.lower()
         if "nova" in recipe_file_path_lower:
             recipe_type = "nova"
+        elif "nemo" in recipe_file_path_lower:
+            recipe_type = "nemo"
         elif "llmft" in recipe_file_path_lower:
             recipe_type = "llmft"
         elif "verl" in recipe_file_path_lower:
@@ -204,7 +206,7 @@ def validate_override_parameters_templatization(
 
     # Add recipe-type-specific skips
     # For non-Nova recipes, skip 'replicas' since it's not in their recipe structure
-    if recipe_type in ["llmft", "verl", "evaluation", "unknown"]:
+    if recipe_type in ["llmft", "nemo", "verl", "evaluation", "unknown"]:
         skip_params |= non_nova_skip_params
 
     for param_name in override_params.keys():

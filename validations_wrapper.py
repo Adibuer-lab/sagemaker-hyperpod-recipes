@@ -21,6 +21,7 @@ from launcher.config_validator.schema.llmft_schema_validation import (
     LLMFTRecipeValidator,
     LLMFTTrainerValidator,
 )
+from launcher.config_validator.schema.nemo_schema_validation import NemoRecipeValidator
 from launcher.config_validator.schema.nova_schema_validation import NovaRecipeValidator
 from launcher.config_validator.schema.verl_schema_validation import VerlRecipeValidator
 from launcher.config_validator.type_validator import TypeValidator
@@ -63,6 +64,9 @@ def validate_config(fn: _T) -> _T:
                 elif model_type.startswith("llm_finetuning_aws"):
                     # Validate llmft config
                     LLMFTRecipeValidator(**recipes_dict)
+                elif model_type == "nemo2":
+                    # Validate NeMo config
+                    NemoRecipeValidator(**recipes_dict)
                 elif model_type.startswith("hf"):
                     # For hf recipes, only validate the trainer section for now
                     if "trainer" in recipes_dict:

@@ -23,7 +23,7 @@ import re
 
 import pytest
 
-RECIPE_TYPES = ["nova", "llmft", "verl", "checkpointless"]
+RECIPE_TYPES = ["nova", "llmft", "verl", "checkpointless", "nemo"]
 
 # Expected account-to-region mapping (each region should consistently use same account per environment)
 REGION_ACCOUNT_MAPPING = {
@@ -87,6 +87,17 @@ REGION_ACCOUNT_MAPPING = {
             "us-west-2": "300869608763",
         },
     },
+    "nemo": {
+        "prod": {
+            "us-east-1": "327873000638",
+        },
+        "gamma": {
+            "us-east-1": "190594010507",
+        },
+        "beta": {
+            "us-west-2": "300869608763",
+        },
+    },
 }
 
 # Expected account IDs per processor
@@ -139,6 +150,11 @@ ACCOUNT_IDS = {
         "prod": "839249767557",
         "gamma": "839249767557",
     },  # Checkpointless uses same account for both
+    "nemo": {
+        "prod": {"327873000638"},
+        "gamma": {"190594010507"},
+        "beta": {"300869608763"},
+    },
 }
 
 # Regional parameters file paths
@@ -147,6 +163,7 @@ REGIONAL_PARAMS_FILES = {
     "llmft": "launcher/recipe_templatization/llmft/llmft_regional_parameters.json",
     "verl": "launcher/recipe_templatization/verl/verl_regional_parameters.json",
     "checkpointless": "launcher/recipe_templatization/checkpointless/checkpointless_regional_parameters.json",
+    "nemo": "launcher/recipe_templatization/nemo/nemo_regional_parameters.json",
 }
 
 # Valid platforms - only these are allowed
@@ -197,11 +214,19 @@ def regional_params_checkpointless():
 
 
 @pytest.fixture(scope="module")
+def regional_params_nemo():
+    """Load NeMo regional parameters once for all tests."""
+    with open(REGIONAL_PARAMS_FILES["nemo"]) as f:
+        return json.load(f)
+
+
+@pytest.fixture(scope="module")
 def all_regional_params(
     regional_params_nova,
     regional_params_llmft,
     regional_params_verl,
     regional_params_checkpointless,
+    regional_params_nemo,
 ):
     """Combined fixture providing all regional parameters."""
     return {
@@ -209,6 +234,7 @@ def all_regional_params(
         "llmft": regional_params_llmft,
         "verl": regional_params_verl,
         "checkpointless": regional_params_checkpointless,
+        "nemo": regional_params_nemo,
     }
 
 

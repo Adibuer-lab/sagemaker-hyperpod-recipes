@@ -1,0 +1,31 @@
+{
+  "_comment": "Container availability for NeMo 2.0 recipes.",
+  "nemo2_qwen2_5_14b_instruct_seq4k_gpu_sft_fft": {
+    "k8s": {
+      "container_image": {
+        "beta": {
+          "us-west-2": "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0-llama"
+        },
+        "gamma": {
+          "us-east-1": "190594010507.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0-llama"
+        },
+        "prod": {
+          "us-east-1": "327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0-llama"
+        }
+      }
+    },
+    "sm_jobs": {
+      "container_image": {
+        "beta": {
+          "us-west-2": "300869608763.dkr.ecr.us-west-2.amazonaws.com/hyperpod-recipes:llmft-v1.0.0-llama"
+        },
+        "gamma": {
+          "us-east-1": "190594010507.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0-llama"
+        },
+        "prod": {
+          "us-east-1": "327873000638.dkr.ecr.us-east-1.amazonaws.com/hyperpod-recipes:llmft-v1.0.0-llama"
+        }
+      }
+    }
+  }
+}

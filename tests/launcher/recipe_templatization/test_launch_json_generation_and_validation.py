@@ -62,7 +62,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 # Configuration
-RECIPE_PREFIXES = ["llmft", "nova", "verl", "evaluation"]
+RECIPE_PREFIXES = ["llmft", "nemo", "nova", "verl", "evaluation"]
 
 # DEBUG: Filter recipes by path substring (e.g., "evaluation", "lite", "sft_lora")
 # Set to None to test all recipes
@@ -640,7 +640,7 @@ class LaunchJsonGenerator:
                 continue
 
             # Validate stages based on recipe type
-            if recipe_prefix in ["llmft", "verl"]:
+            if recipe_prefix in ["llmft", "nemo", "verl"]:
                 for stage_name in param_value.keys():
                     if stage_name not in VALID_REGIONAL_STAGES:
                         errors.append(f"Invalid stage in {param_name}: {stage_name}. Valid: {VALID_REGIONAL_STAGES}")
@@ -893,6 +893,9 @@ class LaunchJsonGenerator:
                             from launcher.recipe_templatization.llmft.llmft_recipe_template_processor import (
                                 LLMFTRecipeTemplateProcessor,
                             )
+                            from launcher.recipe_templatization.nemo.nemo_recipe_template_processor import (
+                                NemoRecipeTemplateProcessor,
+                            )
                             from launcher.recipe_templatization.nova.nova_recipe_template_processor import (
                                 NovaRecipeTemplateProcessor,
                             )
@@ -906,6 +909,8 @@ class LaunchJsonGenerator:
                             # Determine recipe type and create processor
                             if "nova" in recipe_file_str.lower():
                                 recipe_processor = NovaRecipeTemplateProcessor(original_recipe, platform=job_type)
+                            elif "nemo" in recipe_file_str.lower():
+                                recipe_processor = NemoRecipeTemplateProcessor(original_recipe, platform=job_type)
                             elif "llmft" in recipe_file_str.lower():
                                 recipe_processor = LLMFTRecipeTemplateProcessor(original_recipe, platform=job_type)
                             elif "verl" in recipe_file_str.lower():

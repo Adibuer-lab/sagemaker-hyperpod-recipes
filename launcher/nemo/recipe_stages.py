@@ -54,6 +54,12 @@ class SMTrainingGPURecipe(SMTraining):
         if cfg_git_entry_script != None:
             return cfg_git_entry_script
 
+        model_type = OmegaConf.select(self.cfg, "recipes.run.model_type", default=None)
+        if model_type == "nemo2":
+            cfg_entry_script = OmegaConf.select(self.cfg, "recipes.entry_script", default=None)
+            if cfg_entry_script:
+                return Path(cfg_entry_script)
+
         # [TODO] Handle generate the script path from github
         choice_model_type, _ = self.get_stage_config_choice()
         choice_model_type = choice_model_type.split("/")[1]

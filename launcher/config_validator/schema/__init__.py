@@ -15,6 +15,7 @@
 from . import (
     base,
     llmft_schema_validation,
+    nemo_schema_validation,
     nova_schema_validation,
     verl_schema_validation,
 )

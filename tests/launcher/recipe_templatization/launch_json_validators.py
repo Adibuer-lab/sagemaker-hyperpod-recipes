@@ -67,6 +67,8 @@ def identify_recipe_type(recipe_name: str) -> str:
     # Check for training recipes
     if "llmft" in recipe_name_lower or "llm_finetuning" in recipe_name_lower:
         return "llmft"
+    elif "nemo" in recipe_name_lower:
+        return "nemo"
     elif "verl" in recipe_name_lower:
         return "verl"
     elif "nova" in recipe_name_lower:
@@ -184,7 +186,7 @@ def validate_k8s_templates(launch_json: Dict, recipe_type: str) -> List[str]:
     errors = []
 
     # Define valid recipe types
-    valid_recipe_types = ["llmft", "nova_training", "nova_eval", "verl", "open_source_eval"]
+    valid_recipe_types = ["llmft", "nemo", "nova_training", "nova_eval", "verl", "open_source_eval"]
 
     # Fail if recipe_type is not in the preset list
     if recipe_type not in valid_recipe_types:
@@ -197,7 +199,7 @@ def validate_k8s_templates(launch_json: Dict, recipe_type: str) -> List[str]:
     # Common templates for all K8s recipes
     required_templates = []
 
-    if recipe_type in ["llmft", "nova_training", "verl", "nova_eval"]:
+    if recipe_type in ["llmft", "nemo", "nova_training", "verl", "nova_eval"]:
         required_templates = ["training.yaml", "training-config.yaml"]
     elif recipe_type == "open_source_eval":
         # Open source evaluation uses evaluation-specific templates

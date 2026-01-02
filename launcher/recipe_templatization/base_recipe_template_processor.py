@@ -85,22 +85,29 @@ class BaseRecipeTemplateProcessor(ABC):
                             continue
                         current_value = data[key]
                         result[key] = flattened[current_path]
-                        template_override = flattened[current_path][
-                            2:-2
-                        ]  # Get the override key without the '{{' and '}}'
-                        if template_override in self.recipe_override_parameters:
-                            # Dont update the default value for override parameter if it is in deny list
-                            if template_override in self.avoid_default_val_update_attributes:
-                                continue
-                            else:
-                                # Update default value for the override attribute with the value in the recipe file
-                                self.recipe_override_parameters[template_override]["default"] = (
-                                    OmegaConf.to_container(current_value, resolve=True)
-                                    if isinstance(current_value, (ListConfig))
-                                    else current_value
-                                )
+                        if isinstance(flattened[current_path], str) and flattened[current_path].startswith("{{"):
+                            template_override = flattened[current_path][
+                                2:-2
+                            ]  # Get the override key without the '{{' and '}}'
+                            if template_override in self.recipe_override_parameters:
+                                # Dont update the default value for override parameter if it is in deny list
+                                if template_override in self.avoid_default_val_update_attributes:
+                                    continue
+                                else:
+                                    # Update default value for the override attribute with the value in the recipe file
+                                    self.recipe_override_parameters[template_override]["default"] = (
+                                        OmegaConf.to_container(current_value, resolve=True)
+                                        if isinstance(current_value, (ListConfig))
+                                        else current_value
+                                    )
                     else:
                         result[key] = _substitute(value, current_path)
+                return result
+            if isinstance(data, (list, ListConfig)):
+                result = []
+                for idx, item in enumerate(data):
+                    current_path = f"{path}[{idx}]" if path else f"[{idx}]"
+                    result.append(_substitute(item, current_path))
                 return result
             return data
 
@@ -123,9 +130,15 @@ class BaseRecipeTemplateProcessor(ABC):
                         new_path = f"{path}.{key}" if path else key
                         if isinstance(value, dict):
                             _flatten(value, new_path, in_section)
+                        elif isinstance(value, list):
+                            _flatten(value, new_path, in_section)
                         else:
                             if section_type == "all" or in_section == section_type:
                                 flattened[new_path] = value
+            elif isinstance(obj, list):
+                for idx, item in enumerate(obj):
+                    item_path = f"{path}[{idx}]" if path else f"[{idx}]"
+                    _flatten(item, item_path, in_section)
 
         _flatten(template_dict)
         return flattened

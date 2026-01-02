@@ -40,6 +40,9 @@ from ..recipe_templatization.checkpointless.checkpointless_recipe_template_proce
 from ..recipe_templatization.llmft.llmft_recipe_template_processor import (
     LLMFTRecipeTemplateProcessor,
 )
+from ..recipe_templatization.nemo.nemo_recipe_template_processor import (
+    NemoRecipeTemplateProcessor,
+)
 from ..recipe_templatization.verl.verl_recipe_template_processor import (
     VerlRecipeTemplateProcessor,
 )
@@ -677,6 +680,8 @@ class SMTraining(Training):
                     recipe_template_processor = CheckpointlessRecipeTemplateProcessor(
                         self.cfg, platform=self.cfg.cluster_type
                     )
+                case "nemo2":
+                    recipe_template_processor = NemoRecipeTemplateProcessor(self.cfg, platform=self.cfg.cluster_type)
                 case _:
                     raise ValueError(f"Unsupported model type: {model_type}")
 
@@ -805,8 +810,16 @@ class SMTraining(Training):
         """
         Based on https://github.com/NVIDIA/NeMo-Framework-Launcher/blob/23.11/launcher_scripts/nemo_launcher/core/stages.py#L608
         """
+        model_type = OmegaConf.select(self.cfg, "recipes.run.model_type", default=None)
+        if model_type == "nemo2":
+            script_args = OmegaConf.select(self.cfg, "recipes.script_args", default=None)
+            if script_args is not None:
+                arg_str = []
+                for arg in list(script_args):
+                    for key, val in arg.items():
+                        arg_str.append(f"{key} {val} ")
+                return "".join(arg_str)
         if self.cluster == "k8s":
-            model_type = OmegaConf.select(self.cfg, "recipes.run.model_type", default=None)
             if model_type in {"llm_finetuning_aws", "hf"}:
                 # LLMFT adapter entrypoints expect their own config name (e.g., smp_llama_config).
                 return "--config-path=/config"

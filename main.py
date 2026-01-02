@@ -243,7 +243,18 @@ def preprocess_config(cfg) -> Tuple[bool, bool]:
             if cfg.training.get("model", None) == None:
                 cfg.training.model = {"ub_tp_comm_overlap": False}
 
-        if model_type in ["hf", "llm_finetuning_aws", "verl", "hyperpod_checkpointless_nemo"]:
+        if model_type == "nemo2":
+            with omegaconf.open_dict(cfg.recipes):
+                run_cfg = cfg.recipes.get("run") or {}
+                trainer_cfg = cfg.recipes.get("trainer")
+                if trainer_cfg is None:
+                    cfg.recipes.trainer = {}
+                    trainer_cfg = cfg.recipes.trainer
+                if run_cfg.get("nodes") is not None:
+                    trainer_cfg["num_nodes"] = run_cfg.get("nodes")
+                if run_cfg.get("ntasks_per_node") is not None:
+                    trainer_cfg["devices"] = run_cfg.get("ntasks_per_node")
+        if model_type in ["hf", "llm_finetuning_aws", "verl", "hyperpod_checkpointless_nemo", "nemo2"]:
             return False, True
 
     return False, False
