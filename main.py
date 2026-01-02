@@ -212,6 +212,10 @@ def preprocess_config(cfg) -> Tuple[bool, bool]:
             else:
                 ntasks_per_node = 8
 
+        # if not in a unit-test environment de-dupe consecutive runs by appending random hash to end of job name
+        if "pytest" not in sys.modules and "name" in cfg.training_cfg.run:
+            cfg.training_cfg.run.name = valid_run_name(cfg.training_cfg.run.get("name", None))
+
         # To align with https://github.com/NVIDIA/NeMo-Framework-Launcher/blob/23.11/launcher_scripts/nemo_launcher/core/stages.py#L721
         with omegaconf.open_dict(stage_cfg):
             stage_cfg.trainer = {"devices": ntasks_per_node}
@@ -222,10 +226,6 @@ def preprocess_config(cfg) -> Tuple[bool, bool]:
         # To align with https://github.com/NVIDIA/NeMo-Framework-Launcher/blob/23.11/launcher_scripts/nemo_launcher/core/stages.py#L313C54-L313C72
         with omegaconf.open_dict(cfg):
             cfg.training = {"model": {"ub_tp_comm_overlap": False}}
-
-        # if not in a unit-test environment de-dupe consecutive runs by appending random hash to end of job name
-        if "pytest" not in sys.modules and "name" in cfg.training_cfg.run:
-            cfg.training_cfg.run.name = valid_run_name(cfg.training_cfg.run.get("name", None))
 
         return True, False
 

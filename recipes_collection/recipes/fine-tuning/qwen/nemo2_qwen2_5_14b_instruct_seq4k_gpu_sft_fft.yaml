@@ -33,6 +33,7 @@ cluster:
 training_cfg:
   run:
     name: nemo2-qwen25-fc-sft
+    results_dir: ${base_results_dir}/${.name}
     nodes: 1
     ntasks_per_node: 8
   entry_script: examples/nemo2/qwen25_fc_sft.py
