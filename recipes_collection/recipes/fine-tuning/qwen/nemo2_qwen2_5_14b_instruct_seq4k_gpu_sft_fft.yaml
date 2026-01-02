@@ -8,7 +8,7 @@ instance_types: ["ml.p4d.24xlarge", "ml.p5.48xlarge"]
 defaults:
   - _self_
   - /cluster@cluster.cluster_config: k8s
-  - override hydra/job_logging: stdout
+  - override /hydra/job_logging: stdout
 
 base_results_dir: null
 container: null
