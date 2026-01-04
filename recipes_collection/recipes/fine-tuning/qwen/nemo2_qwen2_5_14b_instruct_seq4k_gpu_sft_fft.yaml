@@ -42,3 +42,15 @@ script_args:
   - --num-workers: ${oc.env:FC_NEMO2_NUM_WORKERS,2}
   - --peft-scheme: ${oc.env:FC_NEMO2_PEFT,"none"}
   - --seed: ${oc.env:FC_NEMO2_SEED,42}
+
+##########################################################################################
+###         The following configurations are used in elastic training only
+##########################################################################################
+elastic_policy:
+  is_elastic: false
+  min_nodes: 1
+  max_nodes: 16
+  replica_increment_step: 1
+  use_graceful_shutdown: true
+  scaling_timeout: 600
+  graceful_shutdown_timeout: 600

@@ -405,6 +405,23 @@ class SMTrainingGPURecipeElastic(SMTrainingGPURecipe):
         """
         Based on https://github.com/NVIDIA/NeMo-Framework-Launcher/blob/23.11/launcher_scripts/nemo_launcher/core/stages.py#L608
         """
+        # If script_args exist (NeMo2 recipes), always render them for elastic jobs.
+        script_args = OmegaConf.select(self.cfg, "recipes.script_args", default=None)
+        if script_args is None:
+            script_args = OmegaConf.select(self.cfg, "training.script_args", default=None)
+        if script_args is not None:
+            arg_str = []
+            skip_empty_for = {"--recompute-method"}
+            for arg in list(script_args):
+                for key, val in arg.items():
+                    if key in skip_empty_for:
+                        if val is None:
+                            continue
+                        val_str = str(val).strip()
+                        if not val_str or val_str.lower() == "none":
+                            continue
+                    arg_str.append(f"{key} {val} ")
+            return "".join(arg_str)
         if self.cluster == "k8s":
             model_type = OmegaConf.select(self.cfg, "recipes.run.model_type", default=None)
             if model_type in {"llm_finetuning_aws", "hf"}:
