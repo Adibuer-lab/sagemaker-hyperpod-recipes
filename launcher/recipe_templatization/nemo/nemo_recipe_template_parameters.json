@@ -31,7 +31,7 @@
             "--hf-model-id": "{{hf_model_id}}"
           },
           {
-            "--import-output": "{{results_directory}}/checkpoints/qwen25_14b_instruct.nemo"
+            "--import-output": "{{import_output}}"
           },
           {
             "--restore-path": "{{restore_path}}"
@@ -108,6 +108,11 @@
           "type": "string",
           "required": true,
           "default": "Qwen/Qwen2.5-Coder-14B-Instruct"
+        },
+        "import_output": {
+          "type": "string",
+          "required": true,
+          "default": ""
         },
         "seq_length": {
           "type": "integer",

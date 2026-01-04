@@ -1,0 +1,27 @@
+# NeMo 2.0 Qwen2.5-Coder-7B HF → NeMo import (single-process).
+
+display_name: "NeMo 2.0 Qwen2.5-Coder-7B Instruct HF Import"
+version: "1.0.0"
+instance_types: ["ml.p4d.24xlarge", "ml.p5.48xlarge"]
+
+defaults:
+  - _self_
+  - /cluster@cluster.cluster_config: k8s
+
+run:
+  name: nemo2-qwen25-7b-import
+  model_type: nemo2
+  results_dir: ${base_results_dir}/${.name}
+  nodes: 1
+  ntasks_per_node: 1
+
+trainer:
+  devices: 1
+  num_nodes: 1
+
+entry_script: examples/nemo2/qwen25_7b_fc_import.py
+
+script_args:
+  - --hf-model-id: ${oc.env:FC_NEMO2_HF_MODEL_ID,"Qwen/Qwen2.5-Coder-7B-Instruct"}
+  - --output-path: ${oc.env:FC_NEMO2_IMPORT_OUTPUT,${base_results_dir}/imports/qwen25_7b_instruct.nemo}
+  - --seq-length: ${oc.env:FC_NEMO2_SEQ_LEN,4096}

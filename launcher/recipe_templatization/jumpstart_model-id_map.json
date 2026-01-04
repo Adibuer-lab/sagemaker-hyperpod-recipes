@@ -17,6 +17,7 @@
     "qwen-2d5-7b": "huggingface-llm-qwen2-5-7b-instruct",
     "qwen-2d5-14b": "huggingface-llm-qwen2-5-14b-instruct",
     "nemo2-qwen25-fc-sft": "huggingface-llm-qwen2-5-14b-instruct",
+    "nemo2-qwen25-7b-fc-sft": "huggingface-llm-qwen2-5-7b-instruct",
     "qwen-2d5-32b": "huggingface-llm-qwen2-5-32b-instruct",
     "qwen-2d5-72b": "huggingface-llm-qwen2-5-72b-instruct",
     "qwen-3-0d6b": "huggingface-reasoning-qwen3-06b",
