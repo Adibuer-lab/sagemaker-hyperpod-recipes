@@ -36,6 +36,7 @@ script_args:
   - --recompute-granularity: ${oc.env:FC_NEMO2_RECOMPUTE_GRANULARITY,"selective"}
   - --recompute-method: ${oc.env:FC_NEMO2_RECOMPUTE_METHOD,"none"}
   - --recompute-num-layers: ${oc.env:FC_NEMO2_RECOMPUTE_NUM_LAYERS,0}
+  - --gradient-accumulation-fusion: ${oc.env:FC_NEMO2_GRAD_ACCUM_FUSION,"false"}
   - --val-check-interval: ${oc.env:FC_NEMO2_VAL_CHECK_INTERVAL,1.0}
   - --log-every-n-steps: ${oc.env:FC_NEMO2_LOG_EVERY_N_STEPS,1}
   - --num-workers: ${oc.env:FC_NEMO2_NUM_WORKERS,2}
