@@ -34,7 +34,7 @@ script_args:
   - --learning-rate: ${oc.env:FC_NEMO2_LR,1e-5}
   - --warmup-steps: ${oc.env:FC_NEMO2_WARMUP_STEPS,5}
   - --recompute-granularity: ${oc.env:FC_NEMO2_RECOMPUTE_GRANULARITY,"selective"}
-  - --recompute-method: ${oc.env:FC_NEMO2_RECOMPUTE_METHOD,""}
+  - --recompute-method: ${oc.env:FC_NEMO2_RECOMPUTE_METHOD,"none"}
   - --recompute-num-layers: ${oc.env:FC_NEMO2_RECOMPUTE_NUM_LAYERS,0}
   - --val-check-interval: ${oc.env:FC_NEMO2_VAL_CHECK_INTERVAL,1.0}
   - --log-every-n-steps: ${oc.env:FC_NEMO2_LOG_EVERY_N_STEPS,1}
