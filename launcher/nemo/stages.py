@@ -815,8 +815,15 @@ class SMTraining(Training):
             script_args = OmegaConf.select(self.cfg, "recipes.script_args", default=None)
             if script_args is not None:
                 arg_str = []
+                skip_empty_for = {"--recompute-method"}
                 for arg in list(script_args):
                     for key, val in arg.items():
+                        if key in skip_empty_for:
+                            if val is None:
+                                continue
+                            val_str = str(val).strip()
+                            if not val_str or val_str.lower() == "none":
+                                continue
                         arg_str.append(f"{key} {val} ")
                 return "".join(arg_str)
         if self.cluster == "k8s":
