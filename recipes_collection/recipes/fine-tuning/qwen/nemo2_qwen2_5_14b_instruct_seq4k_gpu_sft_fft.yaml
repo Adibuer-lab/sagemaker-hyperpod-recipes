@@ -52,5 +52,5 @@ elastic_policy:
   max_nodes: 16
   replica_increment_step: 1
   use_graceful_shutdown: true
-  scaling_timeout: 600
+  scaling_timeout: 1800
   graceful_shutdown_timeout: 600
