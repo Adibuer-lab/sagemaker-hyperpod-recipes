@@ -30,9 +30,9 @@ script_args:
   - --seq-length: ${oc.env:FC_NEMO2_SEQ_LEN,4096}
   - --micro-batch-size: ${oc.env:FC_NEMO2_MICRO_BS,1}
   - --global-batch-size: ${oc.env:FC_NEMO2_GLOBAL_BS,8}
-  - --max-steps: ${oc.env:FC_NEMO2_MAX_STEPS,50}
+  - --max-steps: ${oc.env:FC_NEMO2_MAX_STEPS,5064}
   - --learning-rate: ${oc.env:FC_NEMO2_LR,1e-5}
-  - --warmup-steps: ${oc.env:FC_NEMO2_WARMUP_STEPS,5}
+  - --warmup-steps: ${oc.env:FC_NEMO2_WARMUP_STEPS,150}
   - --recompute-granularity: ${oc.env:FC_NEMO2_RECOMPUTE_GRANULARITY,"selective"}
   - --recompute-method: ${oc.env:FC_NEMO2_RECOMPUTE_METHOD,"none"}
   - --recompute-num-layers: ${oc.env:FC_NEMO2_RECOMPUTE_NUM_LAYERS,0}
